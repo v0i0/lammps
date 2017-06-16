@@ -2107,7 +2107,7 @@ double PairAIREBO::bondorderLJ(int i, int j, double rij[3], double rijmag,
   double w21,dw21,r34[3],r34mag,cos234,w34,dw34;
   double cross321[3],cross234[3],prefactor,SpN;
   double fcikpc,fcjlpc,fcjkpc,fcilpc;
-  double dt2dik[3],dt2djl[3],aa,aaa1,aaa2,at2,cw,cwnum,cwnom;
+  double dt2dik[3],dt2djl[3],dt2dij[3],aa,aaa1,aaa2,at2,cw,cwnum,cwnom;
   double sin321,sin234,rr,rijrik,rijrjl,rjk2,rik2,ril2,rjl2;
   double dctik,dctjk,dctjl,dctil,rik2i,rjl2i,sink2i,sinl2i;
   double rjk[3],ril[3],dt1dik,dt1djk,dt1djl,dt1dil;
@@ -2115,7 +2115,7 @@ double PairAIREBO::bondorderLJ(int i, int j, double rij[3], double rijmag,
   double PijS,PjiS;
   double rij2,tspjik,dtsjik,tspijl,dtsijl,costmp;
   int *REBO_neighs,*REBO_neighs_i,*REBO_neighs_j,*REBO_neighs_k,*REBO_neighs_l;
-  double F12[3],F34[3],F31[3],F24[3];
+  double F23[3],F12[3],F34[3],F31[3],F24[3];
   double fi[3],fj[3],fk[3],fl[3],f1[3],f2[3],f3[3],f4[4];
   double rji[3],rki[3],rlj[3],r13[3],r43[3];
   double realrij[3], realrijmag;
@@ -2798,6 +2798,13 @@ double PairAIREBO::bondorderLJ(int i, int j, double rij[3], double rijmag,
                   dt2djl[1] = (-r23[2]*cross321[0])+(r23[0]*cross321[2]);
                   dt2djl[2] = (-r23[0]*cross321[1])+(r23[1]*cross321[0]);
 
+                  dt2dij[0] = (r21[2]*cross234[1])-(r34[2]*cross321[1]) -
+                    (r21[1]*cross234[2])+(r34[1]*cross321[2]);
+                  dt2dij[1] = (r21[0]*cross234[2])-(r34[0]*cross321[2]) -
+                    (r21[2]*cross234[0])+(r34[2]*cross321[0]);
+                  dt2dij[2] = (r21[1]*cross234[0])-(r34[1]*cross321[0]) -
+                    (r21[0]*cross234[1])+(r34[0]*cross321[1]);
+
                   aa = (prefactor*2.0*cw/cwnom)*w21*w34 *
                     (1.0-tspjik)*(1.0-tspijl);
                   aaa1 = -prefactor*(1.0-square(om1234)) *
@@ -2809,6 +2816,10 @@ double PairAIREBO::bondorderLJ(int i, int j, double rij[3], double rijmag,
                   fcjlpc = (-dt1djl*at2)+(aaa2*dtsijl*dctjl*(1.0-tspjik));
                   fcjkpc = (-dt1djk*at2)+(aaa2*dtsjik*dctjk*(1.0-tspijl));
                   fcilpc = (-dt1dil*at2)+(aaa2*dtsijl*dctil*(1.0-tspjik));
+
+                  F23[0] = (aa*dt2dij[0]);
+                  F23[1] = (aa*dt2dij[1]);
+                  F23[2] = (aa*dt2dij[2]);
 
                   F12[0] = (fcikpc*r21[0])+(aa*dt2dik[0]);
                   F12[1] = (fcikpc*r21[1])+(aa*dt2dik[1]);
@@ -2840,6 +2851,14 @@ double PairAIREBO::bondorderLJ(int i, int j, double rij[3], double rijmag,
                   f4[2] = -F34[2]-F24[2];
 
                   rijmbr = rcmin[itype][jtype] / realrijmag;
+
+                  f2[0] += rijmbr * (F23[0] - (realrij[0] * realrij[0] * F23[0] + realrij[0] * realrij[1] * F23[1] + realrij[0] * realrij[2] * F23[2]) / (realrijmag * realrijmag));
+                  f2[1] += rijmbr * (F23[1] - (realrij[1] * realrij[0] * F23[0] + realrij[1] * realrij[1] * F23[1] + realrij[1] * realrij[2] * F23[2]) / (realrijmag * realrijmag));
+                  f2[2] += rijmbr * (F23[2] - (realrij[2] * realrij[0] * F23[0] + realrij[2] * realrij[1] * F23[1] + realrij[2] * realrij[2] * F23[2]) / (realrijmag * realrijmag));
+                  f3[0] -= rijmbr * (F23[0] - (realrij[0] * realrij[0] * F23[0] + realrij[0] * realrij[1] * F23[1] + realrij[0] * realrij[2] * F23[2]) / (realrijmag * realrijmag));
+                  f3[1] -= rijmbr * (F23[1] - (realrij[1] * realrij[0] * F23[0] + realrij[1] * realrij[1] * F23[1] + realrij[1] * realrij[2] * F23[2]) / (realrijmag * realrijmag));
+                  f3[2] -= rijmbr * (F23[2] - (realrij[2] * realrij[0] * F23[0] + realrij[2] * realrij[1] * F23[1] + realrij[2] * realrij[2] * F23[2]) / (realrijmag * realrijmag));
+
                   f2[0] += rijmbr * (F24[0] - (realrij[0] * realrij[0] * F24[0] + realrij[0] * realrij[1] * F24[1] + realrij[0] * realrij[2] * F24[2]) / (realrijmag * realrijmag));
                   f2[1] += rijmbr * (F24[1] - (realrij[1] * realrij[0] * F24[0] + realrij[1] * realrij[1] * F24[1] + realrij[1] * realrij[2] * F24[2]) / (realrijmag * realrijmag));
                   f2[2] += rijmbr * (F24[2] - (realrij[2] * realrij[0] * F24[0] + realrij[2] * realrij[1] * F24[1] + realrij[2] * realrij[2] * F24[2]) / (realrijmag * realrijmag));
